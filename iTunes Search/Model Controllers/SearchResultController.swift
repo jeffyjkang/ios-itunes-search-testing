@@ -9,6 +9,14 @@
 import Foundation
 
 class SearchResultController {
+    
+    let dataLoader: NetworkDataLoader
+    
+    var error: Error?
+    
+    init(dataLoader: NetworkDataLoader = URLSession.shared) {
+        self.dataLoader = dataLoader
+    }
 
     let baseURL = URL(string: "https://itunes.apple.com/search")!
     var searchResults: [SearchResult] = []
@@ -26,8 +34,7 @@ class SearchResultController {
         var request = URLRequest(url: requestURL)
         request.httpMethod = HTTPMethod.get.rawValue
         
-        let dataTask = URLSession.shared.dataTask(with: request) { (data, _, error) in
-            
+        dataLoader.loadData(with: request) { (data, _, error) in
             if let error = error { NSLog("Error fetching data: \(error)") }
             guard let data = data else { completion(); return }
             
@@ -36,11 +43,28 @@ class SearchResultController {
                 let searchResults = try jsonDecoder.decode(SearchResults.self, from: data)
                 self.searchResults = searchResults.results
             } catch {
+                self.error = error
                 print("Unable to decode data into object of type [SearchResult]: \(error)")
             }
             
             completion()
         }
-        dataTask.resume()
+        
+//        let dataTask = URLSession.shared.dataTask(with: request) { (data, _, error) in
+//
+//            if let error = error { NSLog("Error fetching data: \(error)") }
+//            guard let data = data else { completion(); return }
+//
+//            do {
+//                let jsonDecoder = JSONDecoder()
+//                let searchResults = try jsonDecoder.decode(SearchResults.self, from: data)
+//                self.searchResults = searchResults.results
+//            } catch {
+//                print("Unable to decode data into object of type [SearchResult]: \(error)")
+//            }
+//
+//            completion()
+//        }
+//        dataTask.resume()
     }
 }
